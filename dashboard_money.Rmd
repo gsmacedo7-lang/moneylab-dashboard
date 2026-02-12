@@ -1,0 +1,118 @@
+---
+title: "MoneyBot Dashboard 🚀"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: cosmo
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+# ==============================================================================
+# 1. SETUP E CACHE INTELIGENTE
+# ==============================================================================
+library(flexdashboard)
+library(quantmod)
+library(dygraphs)
+library(xts)
+library(dplyr)
+
+# Definição do Arquivo de Cache (Para não baixar dados toda hora)
+ARQUIVO_CACHE <- "moneybot_cache_historico.rds"
+DATA_INICIO   <- "2021-01-01"
+
+# Função para carregar ou baixar dados
+carregar_dados_blindados <- function() {
+  # Se o arquivo existe e foi modificado hoje, usa o cache
+  if (file.exists(ARQUIVO_CACHE)) {
+    info <- file.info(ARQUIVO_CACHE)
+    if (as.Date(info$mtime) == Sys.Date()) {
+      return(readRDS(ARQUIVO_CACHE))
+    }
+  }
+  
+  # Caso contrário, baixa do Yahoo Finance
+  tryCatch({
+    # Baixa BTC e USD
+    btc <- getSymbols("BTC-USD", src = "yahoo", from = DATA_INICIO, auto.assign = FALSE)
+    usd <- getSymbols("USDBRL=X", src = "yahoo", from = DATA_INICIO, auto.assign = FALSE)
+    ibov <- getSymbols("^BVSP", src = "yahoo", from = DATA_INICIO, auto.assign = FALSE)
+    
+    # Limpeza e Merge (Apenas Fechamento Ajustado)
+    dados <- merge.xts(Ad(btc), Ad(usd), Ad(ibov))
+    colnames(dados) <- c("BTC", "USD", "IBOV")
+    
+    # Salva no disco
+    saveRDS(dados, ARQUIVO_CACHE)
+    return(dados)
+  }, error = function(e) {
+    # Se der erro (sem internet), tenta ler o cache antigo mesmo que desatualizado
+    if (file.exists(ARQUIVO_CACHE)) return(readRDS(ARQUIVO_CACHE))
+    return(NULL)
+  })
+}
+
+# Executa a carga
+dados_historicos <- carregar_dados_blindados()
+```
+
+Row {data-height=500}
+-----------------------------------------------------------------------
+
+### 🪙 Evolução do Bitcoin (Em Dólar)
+
+```{r}
+# Gráfico 1: Bitcoin com Seletor de Data
+if (!is.null(dados_historicos)) {
+  dygraph(dados_historicos$BTC, main = "Bitcoin (USD) - Histórico desde 2021") %>%
+    dyAxis("y", label = "Preço (USD)") %>%
+    dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2")[1], fillGraph = TRUE, fillAlpha = 0.1) %>%
+    dyRangeSelector(height = 20) %>%
+    dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)
+} else {
+  print("Erro ao carregar dados.")
+}
+```
+
+### 💵 Evolução do Dólar (BRL)
+
+```{r}
+# Gráfico 2: Dólar com Linha de Referência
+if (!is.null(dados_historicos)) {
+  media_usd <- mean(dados_historicos$USD, na.rm = TRUE)
+  
+  dygraph(dados_historicos$USD, main = "Dólar (BRL) - Taxa de Câmbio") %>%
+    dyAxis("y", label = "Cotação (R$)") %>%
+    dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2")[2], stepPlot = FALSE) %>%
+    dyLimit(media_usd, color = "red", label = "Média do Período") %>%
+    dyRangeSelector(height = 20) %>%
+    dyHighlight(highlightCircleSize = 5, highlightSeriesBackgroundAlpha = 0.2, hideOnMouseOut = FALSE)
+}
+```
+
+Row {data-height=500}
+-----------------------------------------------------------------------
+
+### 📊 Ibovespa (Pontos)
+
+```{r}
+# Gráfico 3 (Placeholder para completar a linha visual)
+if (!is.null(dados_historicos)) {
+  dygraph(dados_historicos$IBOV, main = "Ibovespa - Benchmark Local") %>%
+    dyOptions(colors = "navy", fillGraph = TRUE, fillAlpha = 0.05) %>%
+    dyRangeSelector(height = 20)
+}
+```
+
+### 🧠 Indicadores Quant (Z-Score & Sharpe)
+
+```{r}
+# Aqui entraremos com os dados do LabAnalyst.R no futuro
+# Por enquanto, um placeholder visual
+valueBox(
+  value = "Aguardando LabAnalyst",
+  icon = "fa-cogs",
+  color = "warning"
+)
+```
