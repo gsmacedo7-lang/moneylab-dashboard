@@ -645,6 +645,8 @@ executar_radar_labtrader <- function() {
     return(NULL)
   }
   
+  db_path <- if (file.exists("MoneyBot_Local.db")) "MoneyBot_Local.db" else "/home/ubuntu/moneylab-dashboard/MoneyBot_Local.db"
+  
   # 1. Cotações Binance em Tempo Real
   p_btc_brl   <- obter_preco_binance("BTCBRL")
   p_paxg_usdt <- obter_preco_binance("PAXGUSDT")
@@ -1026,9 +1028,12 @@ executar_radar_labtrader <- function() {
   
   
   # ----------------------------------------------------------------------------
-  # MOTOR 9: PLANO COFRE DE MIDAS (BRL -> PAXG | DCA Sistemático R$ 50 a cada 5 dias com Piso Ratchet)
+  # MOTOR 9: PLANO COFRE DE MIDAS (BRL -> PAXG | Acumulação Passiva de Ouro)
+  # [DESATIVADO PELA GOVERNANÇA: Ineficiência Estrutural Comprovada (-26,25 reais/mês)]
+  # Simple Earn PAXG de 0,01% a.a. inviabiliza retorno passivo. Ouro alocado via Plano 1.
   # ----------------------------------------------------------------------------
-  if (is.null(pedido)) {
+  PLANO_COFRE_DE_MIDAS_ATIVO <- FALSE
+  if (is.null(pedido) && PLANO_COFRE_DE_MIDAS_ATIVO) {
     hist_exec_file <- "ordens_executadas.rds"
     horas_desde_midas <- 999.0
     if (file.exists(hist_exec_file)) {
