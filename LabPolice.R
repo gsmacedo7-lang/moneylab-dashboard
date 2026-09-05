@@ -721,6 +721,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
         
         aprovado <- TRUE
         motivo_veto <- ""
+        ret_obtido_real <- NA
         estrategia_nome <- as.character(pedido$estrategia)
         hist_exec_file <- "ordens_executadas.rds"
         
@@ -829,21 +830,21 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
           
           if (executar_real && saldo_disp < (qtd_necessaria * 0.98)) {
             aprovado <- FALSE
-            motivo_veto <- sprintf("Saldo insuficiente de %s em custódia (Disponível: %.6f %s | Necessário: %.6f %s / R$ %.2f)",
-                                   origem_asset, saldo_disp, origem_asset, qtd_necessaria, origem_asset, pedido$valor_brl)
+            motivo_veto <- sprintf("Saldo insuficiente de %s:\nDisponível: %.6f | Necessário: %.6f (R$ %.2f)",
+                                   origem_asset, saldo_disp, qtd_necessaria, pedido$valor_brl)
           }
         }
         
         # Trava 0.5: Validação de Notional Mínimo da Binance (R$ 12.00)
         if (aprovado && (is.null(pedido$valor_brl) || as.numeric(pedido$valor_brl) < 12.00)) {
           aprovado <- FALSE
-          motivo_veto <- sprintf("Volume solicitado de R$ %.2f abaixo do Notional mínimo da Binance (R$ 12.00)", pedido$valor_brl)
+          motivo_veto <- sprintf("Volume abaixo do Notional mínimo:\nSolicitado: R$ %.2f | Mínimo Binance: R$ 12.00", pedido$valor_brl)
         }
         
         # Trava 1: Validação da Estratégia
         if (aprovado && !(estrategia_nome %in% estrategias_validas)) {
           aprovado <- FALSE
-          motivo_veto <- sprintf("Estratégia '%s' não autorizada pelo protocolo", estrategia_nome)
+          motivo_veto <- sprintf("Estratégia não autorizada:\n'%s' fora do protocolo ativo", estrategia_nome)
         }
         
         # Subtrava 2.0: Quarentena Antitransbordo Bruce Wayne (12 Horas de Congelamento de Compras & Recompra)
@@ -860,11 +861,11 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
                 # Veto estrito se tentar recomprar a moeda desovada (ex: Caboclo tentando recomprar LINK)
                 if (!is.null(ativo_desovado) && as.character(pedido$destino) == as.character(ativo_desovado)) {
                   aprovado <- FALSE
-                  motivo_veto <- sprintf("Quarentena Bruce Wayne: Recompra de %s terminantemente vetada por mais %.1f horas (ativo recém-desovado em crise macro).",
+                  motivo_veto <- sprintf("Quarentena Bruce Wayne:\nRecompra de %s congelada por mais %.1fh",
                                          ativo_desovado, 12.0 - horas_passadas)
                 } else if (pedido$origem == "BRL") {
                   aprovado <- FALSE
-                  motivo_veto <- sprintf("Quarentena Defensiva Bruce Wayne: Compras em Reais congeladas por mais %.1f horas para proteção de caixa em BRL/Ouro.", 
+                  motivo_veto <- sprintf("Quarentena Defensiva Bruce Wayne:\nCompras em BRL congeladas por mais %.1fh", 
                                          12.0 - horas_passadas)
                 }
               }
@@ -878,8 +879,8 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
             teto_permitido <- ifelse(!is.null(tetos_volume[[estrategia_nome]]), tetos_volume[[estrategia_nome]], 200.00)
             if (is.null(pedido$valor_brl) || pedido$valor_brl > teto_permitido) {
               aprovado <- FALSE
-              motivo_veto <- sprintf("Volume excede o teto de compra de R$ %.2f para %s (Solicitado: R$ %.2f)", 
-                                     teto_permitido, estrategia_nome, pedido$valor_brl)
+              motivo_veto <- sprintf("Teto de compra excedido para %s:\nSolicitado: R$ %.2f | Teto máx: R$ %.2f", 
+                                     estrategia_nome, pedido$valor_brl, teto_permitido)
             }
           }
           # Vendas / Realização de Lucro (Origem != BRL): Autorização de 100% da custódia do ativo
@@ -924,7 +925,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
             
             if (saldo_btc_brl >= teto_btc_20pct) {
               aprovado <- FALSE
-              motivo_veto <- sprintf("Teto de 20%% de Bitcoin Atingido: Posição de BTC (R$ %.2f / %.1f%% do patrimônio) excede o teto de 20%% (R$ %.2f). Novas entradas/rotações para BTC vetadas; vazão de saída para BRL autorizada.",
+              motivo_veto <- sprintf("Teto de 20%% Bitcoin atingido:\nPosição: R$ %.2f (%.1f%%) | Teto máx: R$ %.2f (20.0%%)",
                                      saldo_btc_brl, pct_btc_atual, teto_btc_20pct)
             }
           } else if (aprovado && pedido$origem == "BRL" && pedido$destino %in% c("SOL", "LINK", "ETH", "USDT", "PAXG", "BNB", "ADA", "NEAR")) {
@@ -954,7 +955,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
             
             if (saldo_ativo_brl >= teto_custodia) {
               aprovado <- FALSE
-              motivo_veto <- sprintf("Teto de Posição em Aberto atingido para %s (R$ %.2f em custódia >= R$ %.2f máx). Aguarde a realização de lucro antes de novas compras.",
+              motivo_veto <- sprintf("Teto de posição atingido para %s:\nCustódia atual: R$ %.2f | Teto máx: R$ %.2f",
                                      pedido$destino, saldo_ativo_brl, teto_custodia)
             }
           }
@@ -980,7 +981,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
             
             if (total_cripto_altcoins_brl >= teto_50pct_brl) {
               aprovado <- FALSE
-              motivo_veto <- sprintf("Teto Global de 50%% em Criptos/Altcoins Atingido: Posição total em criptoativos é R$ %.2f (%.1f%% do patrimônio | Teto: R$ %.2f [50%%]). Novas compras de cripto vetadas para desestocagem; vendas e desovas para BRL/USDT/PAXG autorizadas.",
+              motivo_veto <- sprintf("Teto Global de 50%% Cripto atingido:\nPosição: R$ %.2f (%.1f%%) | Teto máx: R$ %.2f (50.0%%)",
                                      total_cripto_altcoins_brl, pct_cripto_atual, teto_50pct_brl)
             }
           }
@@ -1000,7 +1001,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
                   segundos_dif <- as.numeric(difftime(Sys.time(), ultimo_ts, units = "secs"))
                   if (!is.na(segundos_dif) && segundos_dif < 300) {
                     aprovado <- FALSE
-                    motivo_veto <- sprintf("Coordenação Anti-Canibalização Flecha vs Escudo: %s comprou BTC há %.0fs (< 300s). Entrada vetada para evitar canibalização no mesmo candle de 5m.",
+                    motivo_veto <- sprintf("Anti-Canibalização Flecha vs Escudo:\n%s comprou BTC há %.0fs [aguardar candle 5m]",
                                            estrategia_parceira, segundos_dif)
                   }
                 }
@@ -1030,8 +1031,8 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
           
           if (saldo_remanescente_ouro < piso_ouro_acumulado) {
             aprovado <- FALSE
-            motivo_veto <- sprintf("Piso Ratchet Inviolável de Ouro: Venda de PAXG (R$ %.2f) deixaria a reserva em R$ %.2f, violando o piso protegido de R$ %.2f.",
-                                   as.numeric(pedido$valor_brl), saldo_remanescente_ouro, piso_ouro_acumulado)
+            motivo_veto <- sprintf("Piso Ratchet Ouro:\nVenda deixaria reserva em R$ %.2f [piso: R$ %.2f]",
+                                   saldo_remanescente_ouro, piso_ouro_acumulado)
           }
         }
         
@@ -1040,8 +1041,8 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
           min_lucro <- ifelse(!is.null(lucros_minimos[[estrategia_nome]]), lucros_minimos[[estrategia_nome]], 0.80)
           if (is.null(pedido$lucro_esperado_pct) || pedido$lucro_esperado_pct < min_lucro) {
             aprovado <- FALSE
-            motivo_veto <- sprintf("Lucro esperado insuficiente (%.2f%% vs %.2f%% mínimo para %s)",
-                                   pedido$lucro_esperado_pct, min_lucro, estrategia_nome)
+            motivo_veto <- sprintf("Lucro projetado insuficiente:\nEsperado: +%.2f%% | Exigido: +%.2f%%",
+                                   pedido$lucro_esperado_pct, min_lucro)
           }
         }
         
@@ -1076,7 +1077,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
               
               if (horas_dif < cooldown_req) {
                 aprovado <- FALSE
-                motivo_veto <- sprintf("Cooldown ativo para %s (%.1fh desde último trade | exige %.1fh [%d min])",
+                motivo_veto <- sprintf("Cooldown ativo para %s:\nDecorrido: %.1fh | Exige: %.1fh (%d min)",
                                        estrategia_nome, horas_dif, cooldown_req, round(cooldown_req * 60))
               }
             }
@@ -1162,7 +1163,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
               # Segregação Estrita de Custódia: se a estratégia não possui lote de compra aberto, veta a tentativa
               if (nrow(compras_abertas) == 0) {
                 aprovado <- FALSE
-                motivo_veto <- sprintf("Segregação de Custódia: Estratégia %s não possui lote de compra aberto para %s (a custódia existente pertence a outra estratégia). Venda vetada.",
+                motivo_veto <- sprintf("Segregação de Custódia:\n%s não possui lote de compra aberto para %s",
                                        estrategia_nome, pedido$origem)
               } else {
                 validos <- compras_abertas[!is.na(compras_abertas$Preco_Exec) & compras_abertas$Preco_Exec > 0 & !is.na(compras_abertas$Valor_BRL), ]
@@ -1206,14 +1207,15 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
                 
                 if (!is.na(p_entrada) && p_entrada > 0) {
                   ret_nominal <- ((p_atual_mercado - p_entrada) / p_entrada) * 100
+                  ret_obtido_real <- ret_nominal
                   
                   if (tempo_posse_min < 15.0 && ret_nominal < 1.50) {
                     aprovado <- FALSE
-                    motivo_veto <- sprintf("Holding Time Mínimo Espectral: Lote de %s para %s adquirido há apenas %.1f min (exige >= 15 min para maturação de onda intradiária). Venda vetada.",
-                                           pedido$origem, estrategia_nome, tempo_posse_min)
+                    motivo_veto <- sprintf("Holding Time Mínimo:\nLote adquirido há apenas %.1f min [exige >= 15 min]",
+                                           tempo_posse_min)
                   } else if (ret_nominal < 0.40) {
                     aprovado <- FALSE
-                    motivo_veto <- sprintf("Breakeven Lock FIFO: Preço atual de %s (R$ %.2f) está abaixo do custo de compra do lote em aberto (R$ %.2f | Retorno: %+.2f%% [exige >= +0.40%%]). Venda vetada.",
+                    motivo_veto <- sprintf("Breakeven Lock FIFO:\nPreço atual de %s (R$ %.2f) | Lote em aberto: R$ %.2f\nRetorno: %+.2f%% [exige >= +0.40%%]",
                                            pedido$origem, p_atual_mercado, p_entrada, ret_nominal)
                   }
                 }
@@ -1274,10 +1276,11 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
                 
                 ratio_entrada_fifo <- mean(ratios_compra, na.rm = TRUE)
                 ret_satoshis <- ((ratio_live - ratio_entrada_fifo) / ratio_entrada_fifo) * 100
+                ret_obtido_real <- ret_satoshis
                 
                 if (ret_satoshis < 0.40) {
                   aprovado <- FALSE
-                  motivo_veto <- sprintf("Breakeven Lock Cross-Pair (Satoshis): Ratio atual de %s/BTC (%.8f BTC) está abaixo do custo de compra do lote (%.8f BTC | Retorno: %+.2f%% [exige >= +0.40%%]). Venda cruzada vetada.",
+                  motivo_veto <- sprintf("Breakeven Lock Satoshis:\nRatio de %s/BTC (%.8f BTC) | Lote em aberto: %.8f BTC\nRetorno: %+.2f%% [exige >= +0.40%%]",
                                          pedido$origem, ratio_live, ratio_entrada_fifo, ret_satoshis)
                 }
               }
@@ -1296,9 +1299,10 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
               if (nrow(compras_abertas) > 0 && !is.na(compras_abertas$Preco_Exec) && compras_abertas$Preco_Exec > 0) {
                 p_entrada_usdt <- compras_abertas$Preco_Exec / p_usdt_b
                 ret_usdt <- ((p_origem_u_live - p_entrada_usdt) / p_entrada_usdt) * 100
+                ret_obtido_real <- ret_usdt
                 if (ret_usdt < 0.40) {
                   aprovado <- FALSE
-                  motivo_veto <- sprintf("Breakeven Lock Cross-Pair (USDT): Preço atual de %s (US$ %.2f) está abaixo do custo de compra (US$ %.2f | Retorno: %+.2f%% [exige >= +0.40%%]). Venda cruzada vetada.",
+                  motivo_veto <- sprintf("Breakeven Lock USDT:\nPreço atual de %s (US$ %.2f) | Lote em aberto: US$ %.2f\nRetorno: %+.2f%% [exige >= +0.40%%]",
                                          pedido$origem, p_origem_u_live, p_entrada_usdt, ret_usdt)
                 }
               }
@@ -1381,20 +1385,33 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
               file = "ordens_executadas.log", append = TRUE)
           
           # Alerta Telegram Instantâneo (DM Privada)
+          lucro_proj_pct <- as.numeric(pedido$lucro_esperado_pct)
+          lucro_proj_brl <- as.numeric(pedido$valor_brl) * (lucro_proj_pct / 100)
+          str_lucro_proj <- sprintf("+%.2f%% (+R$ %.2f)", lucro_proj_pct, lucro_proj_brl)
+          
           if (executar_real) {
             ativo_qtd_label <- ifelse(pedido$origem == "BRL", pedido$destino, pedido$origem)
             if (resultado_binance$sucesso) {
-              msg_tg <- sprintf("🟢 <b>[ORDEM REAL EXECUTADA NA BINANCE]</b>\n━━━━━━━━━━━━━━━━━━━━\n🎯 <b>Plano:</b> %s\n🔄 <b>Operação:</b> %s ➔ %s\n💰 <b>Valor:</b> R$ %.2f (Qtd: %s %s)\n📈 <b>Lucro Projetado:</b> +%.2f%%\n🆔 <b>Order ID Binance:</b> <code>%s</code>\n⏱️ <b>Data/Hora:</b> %s\n📝 <b>Status:</b> Preenchido na Corretora (FILLED)\n━━━━━━━━━━━━━━━━━━━━",
+              if (!is.na(ret_obtido_real)) {
+                lucro_obt_brl <- as.numeric(pedido$valor_brl) * (ret_obtido_real / 100)
+                str_lucro_obt <- sprintf("%+.2f%% (%+R$ %.2f)", ret_obtido_real, lucro_obt_brl)
+              } else if (pedido$origem == "BRL") {
+                str_lucro_obt <- "Posição aberta (aquisição)"
+              } else {
+                str_lucro_obt <- sprintf("+%.2f%% (+R$ %.2f)", lucro_proj_pct, lucro_proj_brl)
+              }
+              
+              msg_tg <- sprintf("🟢 <b>[ORDEM EXECUTADA]</b>\n━━━━━━━━━━━━━━━━━━━━\n🎯 <b>Plano:</b> %s\n🔄 <b>Operação:</b> %s ➔ %s\n💰 <b>Valor:</b> R$ %.2f (Qtd: %s %s)\n📈 <b>Lucro Projetado:</b> %s\n💵 <b>Lucro Obtido:</b> %s\n🆔 <b>Order ID Binance:</b> <code>%s</code>\n⏱️ <b>Data/Hora:</b> %s\n📝 <b>Status:</b> Preenchido na Corretora (FILLED)\n━━━━━━━━━━━━━━━━━━━━",
                                 estrategia_nome, pedido$origem, pedido$destino, pedido$valor_brl,
                                 ifelse(!is.null(resultado_binance$executedQty), resultado_binance$executedQty, "--"), ativo_qtd_label,
-                                pedido$lucro_esperado_pct, resultado_binance$orderId, ts_str)
+                                str_lucro_proj, str_lucro_obt, resultado_binance$orderId, ts_str)
             } else {
-              msg_tg <- sprintf("⚠️ <b>[FALHA DE EXECUÇÃO NA BINANCE]</b>\n━━━━━━━━━━━━━━━━━━━━\n🎯 <b>Plano:</b> %s\n🔄 <b>Tentativa:</b> %s ➔ %s\n💰 <b>Valor:</b> R$ %.2f\n❌ <b>Erro Corretora:</b> %s\n⏱️ <b>Data/Hora:</b> %s\n━━━━━━━━━━━━━━━━━━━━",
+              msg_tg <- sprintf("⚠️ <b>[FALHA NA EXECUÇÃO]</b>\n━━━━━━━━━━━━━━━━━━━━\n🎯 <b>Plano:</b> %s\n🔄 <b>Tentativa:</b> %s ➔ %s\n💰 <b>Valor:</b> R$ %.2f\n❌ <b>Erro:</b> %s\n⏱️ <b>Data/Hora:</b> %s\n━━━━━━━━━━━━━━━━━━━━",
                                 estrategia_nome, pedido$origem, pedido$destino, pedido$valor_brl, resultado_binance$msg, ts_str)
             }
           } else {
-            msg_tg <- sprintf("🧪 <b>[SIMULAÇÃO // SINAL DE DISPARO APROVADO]</b>\n━━━━━━━━━━━━━━━━━━━━\n🎯 <b>Plano:</b> %s\n🔄 <b>Operação:</b> %s ➔ %s\n💰 <b>Lote Calculado:</b> R$ %.2f\n📈 <b>Lucro Projetado:</b> +%.2f%%\n⏱️ <b>Data/Hora:</b> %s\n📝 <b>Status:</b> 🧪 SIMULAÇÃO — NENHUMA ORDEM ENVIADA À CORRETORA\n━━━━━━━━━━━━━━━━━━━━",
-                              estrategia_nome, pedido$origem, pedido$destino, pedido$valor_brl, pedido$lucro_esperado_pct, ts_str)
+            msg_tg <- sprintf("🧪 <b>[SIMULAÇÃO]</b>\n━━━━━━━━━━━━━━━━━━━━\n🎯 <b>Plano:</b> %s\n🔄 <b>Operação:</b> %s ➔ %s\n💰 <b>Lote Calculado:</b> R$ %.2f\n📈 <b>Lucro Projetado:</b> %s\n⏱️ <b>Data/Hora:</b> %s\n📝 <b>Status:</b> TESTE\n━━━━━━━━━━━━━━━━━━━━",
+                              estrategia_nome, pedido$origem, pedido$destino, pedido$valor_brl, str_lucro_proj, ts_str)
           }
           notificar_telegram_trade(msg_tg)
           
@@ -1467,7 +1484,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
             motivo_veto_clean <- gsub("<", "&lt;", motivo_veto_clean)
             motivo_veto_clean <- gsub(">", "&gt;", motivo_veto_clean)
             
-            msg_veto_tg <- sprintf("⛔ <b>[GATEKEEPER | ORDEM VETADA]</b>\n━━━━━━━━━━━━━━━━━━━━\n🎯 <b>Plano:</b> %s\n⚠️ <b>Tentativa:</b> %s ➔ %s\n🚫 <b>Motivo:</b> %s\n⏱️ <b>Data:</b> %s\n🔕 <i>Avisos para este mesmo veto silenciados por %s no Telegram (logs gravados no servidor).</i>\n━━━━━━━━━━━━━━━━━━━━",
+            msg_veto_tg <- sprintf("⛔ <b>[ORDEM VETADA]</b>\n━━━━━━━━━━━━━━━━━━━━\n🎯 <b>Plano:</b> %s\n⚠️ <b>Tentativa:</b> %s ➔ %s\n🚫 <b>Motivo:</b> %s\n⏱️ <b>Data:</b> %s\n🔕 <i>Avisos para este mesmo veto silenciados por %s</i>\n━━━━━━━━━━━━━━━━━━━━",
                                    estrategia_nome, origem_val, destino_val, motivo_veto_clean, ts_str, txt_mute)
             notificar_telegram_trade(msg_veto_tg)
           } else {
