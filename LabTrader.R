@@ -19,9 +19,9 @@ VALOR_ESCUDO_BRL     <- 200.0  # R$ 200 - Plano 2: Escudo de Aquiles (BRL -> BTC
 VALOR_VIX_BRL        <- 200.0  # R$ 200 - Alias para Escudo de Aquiles
 VALOR_PATRIA_BRL     <- 280.0  # R$ 280 - Plano 3: Pátria Volátil (Reserva Passiva Simple Earn 6,88% a.a.)
 VALOR_TITA_BRL       <- 205.0  # R$ 205 (40 USDT) - Plano 4: Titã do Silício (NVDABUSDT 5h | Posse 51.0h | CV 0.6%)
-VALOR_GRAVIDADE_BRL  <- 180.0  # R$ 180 - Plano 5: Gravidade Zero (BRL -> SOL -> BRL 1h | Posse 18.1h | Opção A: Preservação de BTC)
+VALOR_GRAVIDADE_BRL  <- 180.0  # R$ 180 - Plano 5: Gravidade Zero (BTC -> SOL -> BRL 1h | Posse 18.1h | Modelo A: Alta Velocidade)
 VALOR_CHOQUE_BRL     <- 90.0   # R$ 90 (18 USDT) - Plano 6: Choque Energético (XLE Hedge 5h | Posse 475.5h)
-VALOR_TITAS_BRL      <- 100.0  # R$ 100 - Plano 7: Duelo de Titãs (BRL -> ETH -> BRL 1h | Posse 310.0h | Opção A: Preservação de BTC)
+VALOR_TITAS_BRL      <- 100.0  # R$ 100 - Plano 7: Duelo de Titãs (BTC -> ETH -> BRL 1h | Posse 310.0h | Modelo A: Alta Velocidade)
 VALOR_SAGARANA_BRL   <- 220.0  # R$ 220 - Plano 8: Flecha de Sagarana (BRL <-> BTC 4h | Posse 176.0h | CV 5.9%)
 VALOR_MIDAS_BRL      <- 50.0   # R$ 50  - Plano 9: Cofre de Midas (DCA 5 Dias Simple Earn Ouro)
 VALOR_BNB_BRL        <- 90.0   # R$ 90  - Plano 10: Sentinela de Minas (BRL <-> BNB 3h | Posse 177.9h | CV 7.4%)
@@ -865,10 +865,10 @@ executar_radar_labtrader <- function() {
   }
   
   # ----------------------------------------------------------------------------
-  # MOTOR 5: PLANO GRAVIDADE ZERO (BRL -> SOL -> BRL | Calibrado G500 - 12p / 1h)
+  # MOTOR 5: PLANO GRAVIDADE ZERO (BTC -> SOL -> BRL | Calibrado G500 - 12p / 1h)
   # Metricas G500: +3,43 reais/m (+309%) | Posse: 18,1h (-24,4%) | Platô Otimizado
-  # Arquitetura Opção A: Preservação de 100% do Bitcoin e Rotação via Caixa BRL
-  # Teto Máximo de SOL de 160 reais
+  # Modelo A: Hub de Alta Velocidade - Giro dinâmico de BTC para SOL e realização para BRL
+  # Teto Máximo de SOL de 180 reais
   # ----------------------------------------------------------------------------
   stats_sol_btc <- obter_stats_sol_btc_dual_scale()
   if (is.null(pedido) && !is.null(p_sol_brl) && !is.null(p_btc_brl) && pc1_atual < 0.75) {
@@ -877,15 +877,15 @@ executar_radar_labtrader <- function() {
     dsp_sol_btc   <- stats_sol_btc$dsp_fast
     acc_r         <- dsp_sol_btc$d2Z
     
-    can_trade_brl <- saldo_caixa_brl >= 30.0
-    can_add_sol   <- saldo_sol_brl < 160.0
+    can_trade_btc <- saldo_btc_brl >= 30.0
+    can_add_sol   <- saldo_sol_brl < 180.0
     
     # Calibração G500: Z <= -0.90 com aceleração d2Z >= 0.070
-    if (z_sol_btc <= -0.90 && acc_r >= 0.070 && can_trade_brl && can_add_sol) {
-      lote_g <- min(VALOR_GRAVIDADE_BRL * fator_lote, max(30.0, saldo_caixa_brl * 0.35))
+    if (z_sol_btc <= -0.90 && acc_r >= 0.070 && can_trade_btc && can_add_sol) {
+      lote_g <- min(50.0, max(25.0, saldo_btc_brl * 0.45))
       pedido <- list(
         estrategia = "PLANO_GRAVIDADE_ZERO",
-        origem = "BRL", destino = "SOL",
+        origem = "BTC", destino = "SOL",
         valor_brl = lote_g,
         lucro_esperado_pct = 1.07, timestamp = agora_ts
       )
@@ -941,9 +941,9 @@ executar_radar_labtrader <- function() {
   }
   
   # ----------------------------------------------------------------------------
-  # MOTOR 7: PLANO DUELO DE TITÃS (BRL -> ETH -> BRL | Calibrado G500 - 12p / 1h)
+  # MOTOR 7: PLANO DUELO DE TITÃS (BTC -> ETH -> BRL | Calibrado G500 - 12p / 1h)
   # Metricas G500: +1,30 reais/m (+61,4%) | Posse: 310,0h (-32,7%) | Platô CV: 3,3%
-  # Arquitetura Opção A: Preservação de 100% do Bitcoin e Rotação via Caixa BRL
+  # Modelo A: Hub de Alta Velocidade - Giro dinâmico de BTC para ETH e realização para BRL
   # Lote moderado base para desafogar ratio ETH/BTC
   # ----------------------------------------------------------------------------
   if (is.null(pedido) && !is.null(p_eth_brl) && !is.null(p_btc_brl) && pc1_atual < 0.75) {
@@ -953,12 +953,13 @@ executar_radar_labtrader <- function() {
     
     # Calibração G500: Z <= -1.10 com d2Z >= 0.015
     cond_entrada_titas <- (z_eth_btc <= -1.10) && (dsp_eth_btc$d2Z >= 0.015)
+    can_trade_btc_eth  <- saldo_btc_brl >= 30.0
     
-    if (cond_entrada_titas && saldo_eth_brl < 260.0 && saldo_caixa_brl >= 30.0) {
-      lote_t <- min(VALOR_TITAS_BRL * fator_lote, max(30.0, saldo_caixa_brl * 0.30))
+    if (cond_entrada_titas && saldo_eth_brl < 260.0 && can_trade_btc_eth) {
+      lote_t <- min(45.0, max(25.0, saldo_btc_brl * 0.40))
       pedido <- list(
         estrategia = "PLANO_DUELO_DE_TITAS",
-        origem = "BRL", destino = "ETH",
+        origem = "BTC", destino = "ETH",
         valor_brl = lote_t,
         lucro_esperado_pct = 0.53, timestamp = agora_ts
       )

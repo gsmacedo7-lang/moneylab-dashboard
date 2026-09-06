@@ -1,6 +1,6 @@
 # 🇧🇷 Planos de Investimento e Acumulação Patrimonial MoneyLab — Arquitetura Quantitativa v19.0 (Hedge US TradFi)
 
-> *"Um ecossistema quantitativo unificado governado pelo Harmonicus e pelo Gatekeeper LabPolice, integrando 15 motores estatísticos com grid multi-tranche, Phase Bet Sizing por Hilbert (\(\theta_t\)), Trailing Stop por Desaceleração (\(d^2Z/dt^2\)), Ciclo Dominante \(T_0\), Cointegração Causal VECM, Difusão de Langevin com Ruído Espectral \(\sigma\), Trava 6 Breakeven Lock FIFO por Lote em Aberto, Quarentena Bruce Wayne de 12 horas, Banda Ratchet Anti-Venda de Fundo (-1,5% a -4,5%), Subtrava 2.2 Teto Global de 50% em Criptos e Altcoins, Rotação para Hedges Americanos (NVDA, XLE, TLT, BITI/SH) e Acumulação Sistemática em Dólar e Ouro com Simple Earn Flexível."*
+> *"Um ecossistema quantitativo unificado governado pelo Harmonicus e pelo Gatekeeper LabPolice, integrando 15 motores estatísticos com grid multi-tranche, Phase Bet Sizing por Hilbert (\(\theta_t\)), Trailing Stop por Desaceleração (\(d^2Z/dt^2\)), Ciclo Dominante \(T_0\), Cointegração Causal VECM, Difusão de Langevin com Ruído Espectral \(\sigma\), Trava 6 Breakeven Lock FIFO por Lote em Aberto, Quarentena Bruce Wayne de 12 horas, Banda Ratchet Anti-Venda de Fundo (-1,5% a -4,5%), Subtrava 2.2 Teto Global de 80% em Criptos e Altcoins, Rotação para Hedges Americanos (NVDA, XLE, TLT, BITI/SH) e Acumulação Sistemática em Dólar e Ouro com Simple Earn Flexível."*
 
 ---
 
@@ -9,7 +9,7 @@
 * **Baseline de Aportes em Espécie (SSOT Auditada):** **2.230,00 reais** em espécie (2.030,00 reais via depósitos bancários Fiat PIX + 200,00 reais via P2P/C2C Ordem `22847032801593081856` em 20/01/2026), acrescida dinamicamente a cada novo aporte registrado via API.
 * **Patrimônio Total em Custódia Real (Valuation Dinâmico Multi-Wallet):** Apurado em tempo real somando Spot (deduplicado de LD*), Simple Earn flexível e Funding, sem limites artificiais fixos.
 * **Classificação Estrutural de Ativos:**
-  * **Criptos e Altcoins (Teto Global de 50%):** `BTC`, `ETH`, `SOL`, `LINK`, `BNB`, `ADA`, `NEAR`, `AVAX`, `DOGE`.
+  * **Criptos e Altcoins (Teto Global de 80%):** `BTC`, `ETH`, `SOL`, `LINK`, `BNB`, `ADA`, `NEAR`, `AVAX`, `DOGE`.
   * **Não-Cripto / Hedges / Moeda Fiduciária (100% Isentos do Teto):** `BRL` (Caixa), `USDT` (Dólar/FX), `PAXG` (Ouro Físico LBMA) e Ativos TradFi US (`NVDA`, `XLE`, `TLT`, `BITI`, `SH`, `SP500`, `WTI`).
 
 ---
@@ -30,9 +30,9 @@ Cada um dos 15 motores opera sob isolamento estatístico, governado pelo Gatekee
 | **2** | ⭐ **Plano Escudo de Aquiles** | `BRL -> BTC` | 200 reais | Compra anti-pânico com VIX >= 21 ou Z <= -0,60, d2Z >= +0,014, Trava 6 >= +0,57%. Lucro: **1,74 reais/mês** (Posse: 176,0h). | Ativo (Calibrado G500) |
 | **3** | **Plano Pátria Volátil** | `BRL <-> USDT` | 280 reais | Colchão no Simple Earn (6,88% a.a.) e Desova Escalonada de excedente cambial (Não-Cripto/FX). | Ativo (Gestão Passiva) |
 | **4** | 🇺🇸 ⭐ **Plano Titã do Silício** | `USDT <-> NVDAB` | 100 reais | Tech Alpha intradiário Spot em NVDAB. Período 60, Z <= -1,06, Trava 6 >= +0,40%. Lucro: **1,78 reais/mês** (Posse: 51,0h, CV 0,6%). | Ativo (Calibrado G500) |
-| **5** | **Plano Gravidade Zero** | `BRL -> SOL -> BRL` | 180 reais | Dual-Scale Fourier ratio SOL/BTC com entrada via Caixa BRL (Opção A: Preservação de 100% de BTC). Período 12, Z <= -0,90, Trava 6 >= +1,07%. Lucro: **3,43 reais/mês** (Posse: 18,1h). | Ativo (Calibrado G500) |
+| **5** | **Plano Gravidade Zero** | `BTC -> SOL -> BRL` | 180 reais | Dual-Scale Fourier ratio SOL/BTC com giro dinâmico de BTC (Modelo A: Hub de Alta Velocidade) e realização para BRL. Período 12, Z <= -0,90, Trava 6 >= +1,07%. Lucro: **3,43 reais/mês** (Posse: 18,1h). | Ativo (Calibrado G500) |
 | **6** | 🇺🇸 🛡️ **Plano Choque Energético** | `USDT <-> XLE` | 90 reais | Hedge de Petróleo/Energia (Corr: -0,35 vs BTC). Período 60, Z <= -1,17, Trava 6 >= +0,43%. Lucro: **1,48 reais/mês** (Posse: 475,5h). | Ativo (Calibrado G500) |
-| **7** | ⭐ **Plano Duelo de Titãs** | `BRL -> ETH -> BRL` | 65 reais | Cointegração do ratio ETH/BTC com entrada via Caixa BRL (Opção A: Preservação de 100% de BTC). Período 12, Z <= -1,10, Trava 6 >= +0,53%. Lucro: **1,30 reais/mês** (Posse: 310,0h). | Ativo (Calibrado G500) |
+| **7** | ⭐ **Plano Duelo de Titãs** | `BTC -> ETH -> BRL` | 65 reais | Cointegração do ratio ETH/BTC com giro dinâmico de BTC (Modelo A: Hub de Alta Velocidade) e realização BRL. Período 12, Z <= -1,10, Trava 6 >= +0,53%. Lucro: **1,30 reais/mês** (Posse: 310,0h). | Ativo (Calibrado G500) |
 | **8** | ⭐ **Plano Flecha de Sagarana** | `BRL <-> BTC` | 220 reais | Dip hunter intradiário em BTC. Período 48, Z <= -0,60, d2Z >= +0,014, Trava 6 >= +0,57%. Lucro: **1,91 reais/mês** (Posse: 176,0h). | Ativo (Calibrado G500) |
 | **9** | **Plano Cofre de Midas** | `BRL -> USDT -> PAXG`| 50 reais | Acumulação passiva de ouro via DCA a cada 5 dias. Ineficiência comprovada em candles 5m (-26,25 reais/mês; Simple Earn 0,01% a.a.). Ouro concentrado no Plano 1. | ⏸️ **Desativado pela Governança** |
 | **10** | ⭐ **Plano Sentinela de Minas** | `BRL <-> BNB` | 90 reais | Mean-reversion 15m e economia de 25% em taxas Binance. Período 36, Z <= -1,15, Trava 6 >= +0,86%. Lucro: **1,86 reais/mês**. | Ativo (Calibrado G500) |
@@ -48,8 +48,8 @@ Cada um dos 15 motores opera sob isolamento estatístico, governado pelo Gatekee
 
 1. **Trava 6 (Breakeven Lock FIFO Soberana):**
    * Nenhuma ordem de venda de rotina pode ser enviada com retorno líquido inferior a **+0,40%** sobre o preço médio de aquisição do lote aberto.
-2. **Subtrava 2.2 (Teto Global de 50% em Criptos e Altcoins):**
-   * A exposição acumulada em criptos voláteis não pode ultrapassar **50% do patrimônio total consolidado**. Se ultrapassar, **qualquer nova compra de cripto é terminantemente vetada**; vendas para BRL, USDT ou PAXG permanecem 100% livres para desestocagem.
+2. **Subtrava 2.2 (Teto Global de 80% em Criptos e Altcoins):**
+   * A exposição acumulada em criptos voláteis não pode ultrapassar **80% do patrimônio total consolidado**. Se ultrapassar, **qualquer nova compra de cripto é terminantemente vetada**; vendas para BRL, USDT ou PAXG permanecem 100% livres para desestocagem.
 3. **Subtrava 2.3 (Coordenação Anti-Canibalização Flecha vs Escudo):**
    * Se o Plano Flecha ou o Plano Escudo tentar comprar Bitcoin no mesmo candle de 5 minutos (< 300 segundos) em que o outro comprou, a nova entrada é automaticamente vetada para impedir sobreposição destrutiva de lotes.
 4. **Quarentena Bruce Wayne (Subtrava 2.0):**

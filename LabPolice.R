@@ -960,7 +960,7 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
             }
           }
           
-          # Subtrava 2.2: Teto Global de 50% em Criptos e Altcoins
+          # Subtrava 2.2: Teto Global de 80% em Criptos e Altcoins (Calibração Alta Velocidade Modelo A)
           # Criptos/Altcoins: BTC, ETH, SOL, LINK, BNB, ADA, NEAR, AVAX, DOGE
           # Não-Cripto (Isentos): BRL (Caixa), USDT (Dólar/FX), PAXG (Ouro Físico/Commodity)
           criptos_altcoins_lista <- c("BTC", "ETH", "SOL", "LINK", "BNB", "ADA", "NEAR", "AVAX", "DOGE")
@@ -977,12 +977,12 @@ processar_solicitacoes_gatekeeper <- function(modo_continuo = FALSE, executar_re
               }
             }
             pct_cripto_atual <- (total_cripto_altcoins_brl / patrimonio_total_brl) * 100.0
-            teto_50pct_brl <- patrimonio_total_brl * 0.50
+            teto_80pct_brl <- patrimonio_total_brl * 0.80
             
-            if (total_cripto_altcoins_brl >= teto_50pct_brl) {
+            if (total_cripto_altcoins_brl >= teto_80pct_brl) {
               aprovado <- FALSE
-              motivo_veto <- sprintf("Teto Global Cripto Atingido\nExposição atual: R$ %.2f (%.1f%%)\nTeto máximo: R$ %.2f (50.0%%)",
-                                     total_cripto_altcoins_brl, pct_cripto_atual, teto_50pct_brl)
+              motivo_veto <- sprintf("Teto Global Cripto Atingido\nExposição atual: R$ %.2f (%.1f%%)\nTeto máximo: R$ %.2f (80.0%%)",
+                                     total_cripto_altcoins_brl, pct_cripto_atual, teto_80pct_brl)
             }
           }
           
