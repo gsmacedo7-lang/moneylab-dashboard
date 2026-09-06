@@ -71,9 +71,9 @@ Sempre que o usuário solicitar uma tarefa ou o assistente for interagir com o s
 | **2** | ⭐ **Plano Escudo de Aquiles** | BRL -> BTC | 200 reais | Compra anti-pânico quando VIX >= 21 ou Z <= -1,8. DAS Fundo: 90,6%. | Ativo (+18,76 reais / DAS 90,6%) |
 | **3** | **Plano Pátria Volátil** | BRL <-> USDT | 280 reais | Colchão no Simple Earn (6,88% a.a.) e Desova Escalonada de excedente (Não-Cripto/FX). | Ativo (Piso 280 reais / 0% Cripto) |
 | **4** | 🇺🇸 ⭐ **Plano Titã do Silício** | USDT <-> NVDAB | 100 reais | Tech Alpha intradiário com Hilbert Wave em NVDABUSDT real Spot. | Ativo (Binance Backed Equity) |
-| **5** | **Plano Gravidade Zero** | BTC -> SOL -> BRL | 180 reais | Dual-Scale Fourier com Piso BTC de 180 reais e Teto SOL de 160 reais. | Ativo (+171,04 reais em 10 dias) |
+| **5** | **Plano Gravidade Zero** | BRL -> SOL -> BRL | 180 reais | Dual-Scale Fourier ratio SOL/BTC com entrada via Caixa BRL (Opção A: Preservação de 100% de BTC) e Teto SOL de 160 reais. | Ativo (Calibrado G500) |
 | **6** | 🇺🇸 🛡️ **Plano Choque Energético** | USDT <-> XLE | 90 reais | Hedge de Petróleo/Energia com correlação negativa comprovada de -0,35 contra o Bitcoin. | Ativo (Hedge Macro) |
-| **7** | ⭐ **Plano Duelo de Titãs** | BTC -> ETH -> BRL | 65 reais | Cointegração do ratio ETH/BTC e realização para Caixa BRL. DAS Fundo: 92,9%. | Ativo (+34,32 reais em 10 dias) |
+| **7** | ⭐ **Plano Duelo de Titãs** | BRL -> ETH -> BRL | 65 reais | Cointegração do ratio ETH/BTC com entrada via Caixa BRL (Opção A: Preservação de 100% de BTC) e realização BRL. | Ativo (Calibrado G500) |
 | **8** | ⭐ **Plano Flecha de Sagarana** | BRL <-> BTC | 220 reais | Dip hunter com Z <= -1,18 sigma e aceleração d2Z >= 0. DAS Fundo: 68,7%. | Ativo (+8,32 reais em 10 dias) |
 | **9** | **Plano Cofre de Midas** | BRL -> USDT -> PAXG| 50 reais | Acumulação passiva de ouro via DCA a cada 5 dias. Ineficiência comprovada em candles 5m (-26,25 reais/mês; Simple Earn 0,01% a.a.). Ouro concentrado no Plano 1. | ⏸️ **Desativado pela Governança** |
 | **10** | ⭐ **Plano Sentinela de Minas** | BRL <-> BNB | 90 reais | Mean-reversion 15m e economia perpétua de 25% em taxas Binance. | Ativo (+13,97 reais / DAS 79,5%) |
