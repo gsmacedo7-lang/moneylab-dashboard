@@ -741,31 +741,36 @@ executar_radar_labtrader <- function() {
   # ----------------------------------------------------------------------------
   # MOTOR 1: PLANO GUIANA BRASILEIRA (PAXG <-> BTC | Calibrado G500 - 60p / 5h)
   # Metricas G500: +4,35 reais/m | Posse: 123,3h | Platô CV: 7,0%
+  # Desengasgo 1 & 2: Lote Ouro calibrado na folga do piso de R$ 500 e giro livre de BTC
   # ----------------------------------------------------------------------------
   ratio_guiana <- p_paxg_brl / p_btc_brl
   z_guiana     <- (ratio_guiana - stats_guiana$media) / stats_guiana$sd
   dsp_guiana   <- if (!is.null(stats_guiana$dsp)) stats_guiana$dsp else list(theta = 0, d2Z = 0)
   
-  if (z_guiana <= -1.00 && dsp_guiana$d2Z >= -0.015 && (saldo_btc_brl - 180.0) >= 65.0 && saldo_paxg_brl < 800.0) {
-    # Bitcoin eufórico / Ouro com desconto -> Vende BTC excedente e compra PAXG
-    lote_g <- min(VALOR_GUIANA_BRL * fator_lote, saldo_btc_brl - 180.0)
-    if (lote_g >= 65.0) {
+  # Ponta A: Bitcoin eufórico / Ouro com desconto -> Vende BTC e compra PAXG
+  can_sell_btc_guiana <- saldo_btc_brl >= 65.0 && saldo_paxg_brl < 800.0
+  if (z_guiana <= -1.00 && dsp_guiana$d2Z >= -0.015 && can_sell_btc_guiana) {
+    lote_g <- min(75.0 * fator_lote, max(60.0, saldo_btc_brl * 0.45))
+    if (lote_g >= 60.0) {
       pedido <- list(
         estrategia = "PLANO_GUIANA_BRASILEIRA",
         origem = "BTC", destino = "PAXG",
         valor_brl = lote_g, lucro_esperado_pct = 0.40, timestamp = agora_ts
       )
     }
-  } else if (z_guiana >= 0.95 && (saldo_paxg_brl - 450.0) >= 65.0) {
-    # Ouro valorizado / Bitcoin em dip -> Vende PAXG e compra BTC (preservando piso de Ouro em R$ 450)
-    lote_g <- min(VALOR_GUIANA_BRL * fator_lote, saldo_paxg_brl - 450.0)
-    if (lote_g >= 65.0) {
-      pedido <- list(
-        estrategia = "PLANO_GUIANA_BRASILEIRA",
-        origem = "PAXG", destino = "BTC",
-        valor_brl = lote_g,
-        lucro_esperado_pct = 0.40, timestamp = agora_ts
-      )
+  } else if (z_guiana >= 0.95) {
+    # Ponta B: Ouro valorizado / Bitcoin em dip -> Vende PAXG e compra BTC (preservando piso de Ouro em R$ 500)
+    folga_ouro <- saldo_paxg_brl - 505.0
+    if (folga_ouro >= 65.0) {
+      lote_g <- min(90.0 * fator_lote, folga_ouro)
+      if (lote_g >= 60.0) {
+        pedido <- list(
+          estrategia = "PLANO_GUIANA_BRASILEIRA",
+          origem = "PAXG", destino = "BTC",
+          valor_brl = lote_g,
+          lucro_esperado_pct = 0.40, timestamp = agora_ts
+        )
+      }
     }
   }
   
